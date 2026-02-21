@@ -167,12 +167,26 @@ class _StationListScreenState extends State<StationListScreen> {
                               fontSize: 14,
                             ),
                           ),
-                          subtitle: Text(
-                            '📍 ${station.province}',
-                            style: const TextStyle(
-                              color: AppColors.textMuted,
-                              fontSize: 12,
-                            ),
+                          subtitle: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.only(top: 1),
+                                child: Icon(Icons.location_on, size: 14, color: AppColors.textMuted),
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  station.province,
+                                  style: const TextStyle(
+                                    color: AppColors.textMuted,
+                                    fontSize: 12,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ),
                           trailing: const Icon(
                             Icons.chevron_right,

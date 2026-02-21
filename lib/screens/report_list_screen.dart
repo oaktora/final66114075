@@ -203,27 +203,49 @@ class _ReportListScreenState extends State<ReportListScreen> {
                                     ],
                                   ),
                                   const SizedBox(height: 4),
-                                  Text(
-                                    '📍 ${_stationName(report.stationId)}',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: AppColors.textMuted,
-                                    ),
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Padding(
+                                        padding: EdgeInsets.only(top: 1),
+                                        child: Icon(Icons.location_on, size: 14, color: AppColors.textMuted),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Expanded(
+                                        child: Text(
+                                          _stationName(report.stationId),
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: AppColors.textMuted,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                   const SizedBox(height: 2),
                                   Row(
                                     children: [
-                                      Text(
-                                        '👤 ${report.reporterName}',
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: AppColors.textMuted,
+                                      const Icon(Icons.person, size: 14, color: AppColors.textMuted),
+                                      const SizedBox(width: 4),
+                                      Expanded(
+                                        child: Text(
+                                          report.reporterName,
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: AppColors.textMuted,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
                                       if (report.aiResult != null) ...[
                                         const SizedBox(width: 8),
+                                        const Icon(Icons.psychology, size: 14, color: Color(0xFF34C759)),
+                                        const SizedBox(width: 4),
                                         Text(
-                                          '🤖 ${report.aiResult}',
+                                          report.aiResult!,
                                           style: const TextStyle(
                                             fontSize: 12,
                                             color: Color(0xFF34C759),

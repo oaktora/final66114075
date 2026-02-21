@@ -54,7 +54,13 @@ class _HomeScreenState extends State<HomeScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Sync เสร็จแล้ว ✓'),
+          content: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white, size: 20),
+              SizedBox(width: 8),
+              Text('Sync เสร็จแล้ว'),
+            ],
+          ),
           backgroundColor: AppColors.success,
         ),
       );

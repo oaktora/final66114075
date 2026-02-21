@@ -122,7 +122,13 @@ class _AddReportScreenState extends State<AddReportScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('บันทึกรายงานเรียบร้อยแล้ว ✓'),
+          content: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white, size: 20),
+              SizedBox(width: 8),
+              Text('บันทึกรายงานเรียบร้อยแล้ว'),
+            ],
+          ),
           backgroundColor: AppColors.success,
         ),
       );
