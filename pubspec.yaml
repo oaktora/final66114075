@@ -1,0 +1,33 @@
+name: final66114075
+description: "A new Flutter project."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  firebase_core: ^3.3.0
+  sqflite: ^2.3.3+1
+  path: ^1.9.0
+  tflite_flutter: ^0.12.1
+  image: ^4.2.0
+  image_picker: ^1.1.2
+  intl: ^0.19.0
+  connectivity_plus: ^6.0.3
+  shared_preferences: ^2.3.1
+  cloud_firestore: ^5.6.12
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/models/
+    - assets/images/
