@@ -27,6 +27,7 @@ class _AddReportScreenState extends State<AddReportScreen> {
   PollingStation? _selectedStation;
   ViolationType? _selectedType;
   String? _imagePath;
+  List<AIResult>? _aiResults;
   String? _aiResult;
   double _aiConf = 0.0;
   bool _analyzing = false;
@@ -60,19 +61,31 @@ class _AddReportScreenState extends State<AddReportScreen> {
     if (picked == null) return;
     setState(() {
       _imagePath = picked.path;
+      _aiResults = null;
       _aiResult = null;
       _aiConf = 0.0;
     });
-    _analyzeImage(picked.path);
   }
 
   Future<void> _analyzeImage(String path) async {
     setState(() => _analyzing = true);
-    final result = await TfliteHelper.instance.classify(path);
+    final results = await TfliteHelper.instance.classify(path);
     setState(() {
-      _aiResult = result?.label;
-      _aiConf = result?.confidence ?? 0.0;
+      _aiResults = results;
+      if (results != null && results.isNotEmpty) {
+        _aiResult = results.first.label;
+        _aiConf = results.first.confidence;
+      } else {
+        _aiResult = null;
+        _aiConf = 0.0;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('เกิดข้อผิดพลาดในการวิเคราะห์ด้วย AI')),
+        );
+      }
       _analyzing = false;
+
+      if (_aiResult != null && _types.isNotEmpty) {
+      }
     });
   }
 
@@ -110,12 +123,16 @@ class _AddReportScreenState extends State<AddReportScreen> {
     final id = await DatabaseHelper.instance.insertReport(report);
 
     final connectivity = await Connectivity().checkConnectivity();
-    if (connectivity != ConnectivityResult.none) {
+    if (!connectivity.contains(ConnectivityResult.none)) {
       try {
         final saved = report.copyWith(reportId: id);
-        await FirebaseHelper.instance.pushReport(saved);
+        await FirebaseHelper.instance
+            .pushReport(saved)
+            .timeout(const Duration(seconds: 3));
         await DatabaseHelper.instance.markSynced(id);
-      } catch (_) {}
+      } catch (_) {
+        // Timeout or upload error, will sync later
+      }
     }
 
     setState(() => _saving = false);
@@ -235,7 +252,7 @@ class _AddReportScreenState extends State<AddReportScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              _Label('หลักฐานภาพ (ไม่บังคับ)'),
+              _Label('หลักฐานภาพ'),
               if (_imagePath == null)
                 Row(
                   children: [
@@ -257,7 +274,7 @@ class _AddReportScreenState extends State<AddReportScreen> {
                       child: OutlinedButton.icon(
                         onPressed: () => _pickImage(ImageSource.gallery),
                         icon: const Icon(Icons.photo_library_outlined),
-                        label: const Text('อัปโหลด'),
+                        label: const Text('อัปโหลดรูปภาพ'),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
@@ -288,7 +305,9 @@ class _AddReportScreenState extends State<AddReportScreen> {
                           child: GestureDetector(
                             onTap: () => setState(() {
                               _imagePath = null;
+                              _aiResults = null;
                               _aiResult = null;
+                              _aiConf = 0.0;
                             }),
                             child: Container(
                               padding: const EdgeInsets.all(4),
@@ -306,7 +325,7 @@ class _AddReportScreenState extends State<AddReportScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 12),
                     if (_analyzing)
                       Row(
                         children: const [
@@ -322,7 +341,7 @@ class _AddReportScreenState extends State<AddReportScreen> {
                           ),
                         ],
                       )
-                    else if (_aiResult != null)
+                    else if (_aiResults != null && _aiResults!.isNotEmpty)
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
@@ -333,21 +352,96 @@ class _AddReportScreenState extends State<AddReportScreen> {
                             color: const Color(0xFF34C759).withOpacity(0.4),
                           ),
                         ),
-                        child: Row(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(
-                              Icons.psychology,
-                              color: Color(0xFF34C759),
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.psychology,
+                                  color: Color(0xFF34C759),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    'AI ตรวจพบ: $_aiResult (${(_aiConf * 100).toStringAsFixed(0)}%)',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF34C759),
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 10),
-                            Text(
-                              'AI ตรวจพบ: $_aiResult (${(_aiConf * 100).toStringAsFixed(0)}%)',
-                              style: const TextStyle(
+                            const SizedBox(height: 8),
+                            const Divider(color: Colors.black12),
+                            const SizedBox(height: 4),
+                            const Text(
+                              'รายละเอียดความมั่นใจ:',
+                              style: TextStyle(
+                                fontSize: 13,
                                 fontWeight: FontWeight.w600,
-                                color: Color(0xFF34C759),
+                                color: AppColors.textDark,
                               ),
                             ),
+                            const SizedBox(height: 6),
+                            for (var r in _aiResults!)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 2,
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      r.label,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        color: AppColors.textDark,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${(r.confidence * 100).toStringAsFixed(1)}%',
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.textMuted,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                           ],
+                        ),
+                      )
+                    else
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () => _analyzeImage(_imagePath!),
+                          icon: const Icon(
+                            Icons.document_scanner_outlined,
+                            color: AppColors.primary,
+                          ),
+                          label: const Text(
+                            'วิเคราะห์ภาพด้วย AI',
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(
+                              color: AppColors.primary,
+                              width: 1.5,
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
                         ),
                       ),
                   ],

@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/incident_report.dart';
 import 'database_helper.dart';
@@ -23,14 +22,22 @@ class FirebaseHelper {
   }
 
   Future<void> pushReport(IncidentReport report) async {
-    final docRef = _db.collection('incident_reports').doc(report.reportId.toString());
+    final docRef = _db
+        .collection('incident_reports')
+        .doc(report.reportId.toString());
+
+    String? photoUrl = report.evidencePhoto;
+    if (photoUrl != null && !photoUrl.startsWith('http')) {
+      photoUrl = 'OFFLINE_ONLY';
+    }
+
     await docRef.set({
       'report_id': report.reportId,
       'station_id': report.stationId,
       'type_id': report.typeId,
       'reporter_name': report.reporterName,
       'description': report.description,
-      'evidence_photo': report.evidencePhoto,
+      'evidence_photo': photoUrl,
       'timestamp': report.timestamp,
       'ai_result': report.aiResult,
       'ai_confidence': report.aiConfidence,

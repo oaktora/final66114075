@@ -13,20 +13,22 @@ class TfliteHelper {
   TfliteHelper._init();
 
   Interpreter? _interpreter;
-  final List<String> _labels = ['Money', 'Crowd', 'Poster', 'Normal'];
+  final List<String> _labels = ['Money', 'Crowd', 'Poster'];
   bool _loaded = false;
 
   Future<void> loadModel() async {
     if (_loaded) return;
     try {
-      _interpreter = await Interpreter.fromAsset('assets/models/model.tflite');
+      _interpreter = await Interpreter.fromAsset(
+        'assets/models/model_unquant.tflite',
+      );
       _loaded = true;
     } catch (e) {
       print('TFLite load error: $e');
     }
   }
 
-  Future<AIResult?> classify(String imagePath) async {
+  Future<List<AIResult>?> classify(String imagePath) async {
     if (!_loaded) await loadModel();
     if (_interpreter == null) return null;
 
@@ -52,17 +54,15 @@ class TfliteHelper {
       _interpreter!.run(input, output);
 
       final scores = output[0];
-      double maxScore = scores[0];
-      int maxIdx = 0;
-      for (int i = 1; i < scores.length; i++) {
-        if (scores[i] > maxScore) {
-          maxScore = scores[i];
-          maxIdx = i;
-        }
+      List<AIResult> results = [];
+      for (int i = 0; i < scores.length; i++) {
+        results.add(AIResult(_labels[i], scores[i]));
       }
 
-      return AIResult(_labels[maxIdx], maxScore);
+      results.sort((a, b) => b.confidence.compareTo(a.confidence));
+      return results;
     } catch (e) {
+      print('TFLite classify error: $e');
       return null;
     }
   }

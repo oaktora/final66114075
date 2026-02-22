@@ -1,0 +1,40 @@
+﻿Analyzing final66114075...                                      
+
+   info - 'background' is deprecated and shouldn't be used. Use surface instead. This feature was deprecated after v3.18.0-0.1.pre - lib\constants\app_theme.dart:25:9 - deprecated_member_use
+warning - Duplicate import - lib\helpers\firebase_helper.dart:2:8 - duplicate_import
+   info - Don't invoke 'print' in production code - lib\helpers\tflite_helper.dart:25:7 - avoid_print
+   info - The type of the right operand ('ConnectivityResult') isn't a subtype or a supertype of the left operand ('List<ConnectivityResult>') - lib\main.dart:35:18 - unrelated_type_equality_checks
+   info - The type of the right operand ('ConnectivityResult') isn't a subtype or a supertype of the left operand ('List<ConnectivityResult>') - lib\screens\add_report_screen.dart:128:22 - unrelated_type_equality_checks
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\screens\add_report_screen.dart:178:17 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\screens\add_report_screen.dart:202:17 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\add_report_screen.dart:345:58 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\add_report_screen.dart:348:60 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\ai_scan_screen.dart:147:39 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\ai_scan_screen.dart:149:58 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\ai_scan_screen.dart:182:55 - deprecated_member_use
+  error - Undefined name '_top3Stations' - lib\screens\home_screen.dart:37:9 - undefined_identifier
+   info - The type of the right operand ('ConnectivityResult') isn't a subtype or a supertype of the left operand ('List<ConnectivityResult>') - lib\screens\home_screen.dart:45:39 - unrelated_type_equality_checks
+  error - Undefined name '_top3Stations' - lib\screens\home_screen.dart:185:36 - undefined_identifier
+  error - Undefined name '_top3Stations' - lib\screens\home_screen.dart:196:24 - undefined_identifier
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home_screen.dart:221:60 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home_screen.dart:330:24 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home_screen.dart:332:43 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home_screen.dart:383:35 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home_screen.dart:395:30 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\report_detail_screen.dart:44:40 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\report_detail_screen.dart:45:40 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\report_detail_screen.dart:49:62 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\report_detail_screen.dart:117:44 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\report_detail_screen.dart:119:63 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\report_detail_screen.dart:147:50 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\report_detail_screen.dart:150:52 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps - lib\screens\report_detail_screen.dart:230:29 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\screens\report_detail_screen.dart:231:29 - use_build_context_synchronously
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\report_list_screen.dart:101:42 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\report_list_screen.dart:145:51 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\screens\search_screen.dart:102:25 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\station_list_screen.dart:79:58 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\station_list_screen.dart:82:39 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\station_list_screen.dart:85:41 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\station_list_screen.dart:150:56 - deprecated_member_use
+

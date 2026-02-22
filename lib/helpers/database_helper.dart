@@ -121,45 +121,6 @@ class DatabaseHelper {
     for (var t in types) {
       await db.insert('violation_type', t);
     }
-
-    final reports = [
-      {
-        'station_id': 101,
-        'type_id': 1,
-        'reporter_name': 'พลเมืองดี 01',
-        'description': 'พบเห็นการแจกเงินบริเวณหน้าหน่วย',
-        'evidence_photo': null,
-        'timestamp': '2026-02-08 09:30:00',
-        'ai_result': 'Money',
-        'ai_confidence': 0.95,
-        'synced': 0,
-      },
-      {
-        'station_id': 102,
-        'type_id': 3,
-        'reporter_name': 'สมชาย ใจกล้า',
-        'description': 'มีการเปิดรถแห่เสียงดังรบกวน',
-        'evidence_photo': null,
-        'timestamp': '2026-02-08 10:15:00',
-        'ai_result': 'Crowd',
-        'ai_confidence': 0.75,
-        'synced': 0,
-      },
-      {
-        'station_id': 103,
-        'type_id': 5,
-        'reporter_name': 'Anonymous',
-        'description': 'เจ้าหน้าที่พูดจาชี้นำผู้ลงคะแนน',
-        'evidence_photo': null,
-        'timestamp': '2026-02-08 11:00:00',
-        'ai_result': null,
-        'ai_confidence': 0.0,
-        'synced': 0,
-      },
-    ];
-    for (var r in reports) {
-      await db.insert('incident_report', r);
-    }
   }
 
   Future<List<PollingStation>> getAllStations() async {
@@ -249,13 +210,94 @@ class DatabaseHelper {
           ),
         ) ??
         0;
-    final unsynced =
+    final medium =
         Sqflite.firstIntValue(
           await db.rawQuery(
-            'SELECT COUNT(*) FROM incident_report WHERE synced = 0',
+            'SELECT COUNT(*) FROM incident_report ir JOIN violation_type vt ON ir.type_id = vt.type_id WHERE vt.severity = "Medium"',
           ),
         ) ??
         0;
-    return {'total': total, 'high': high, 'unsynced': unsynced};
+    return {'total': total, 'high': high, 'medium': medium};
+  }
+
+  Future<List<Map<String, dynamic>>> getTop3Stations() async {
+    final db = await database;
+    return await db.rawQuery('''
+      SELECT ps.station_name, COUNT(ir.report_id) as incident_count
+      FROM polling_station ps
+      LEFT JOIN incident_report ir ON ps.station_id = ir.station_id
+      GROUP BY ps.station_id
+      ORDER BY incident_count DESC
+      LIMIT 3
+    ''');
+  }
+
+  Future<bool> checkDuplicateStation(int id, String name) async {
+    final db = await database;
+    final result = await db.rawQuery(
+      'SELECT COUNT(*) FROM polling_station WHERE station_name = ? AND station_id != ?',
+      [name, id],
+    );
+    final count = Sqflite.firstIntValue(result) ?? 0;
+    return count > 0;
+  }
+
+  Future<int> countIncidentsByStation(int id) async {
+    final db = await database;
+    final result = await db.rawQuery(
+      'SELECT COUNT(*) FROM incident_report WHERE station_id = ?',
+      [id],
+    );
+    return Sqflite.firstIntValue(result) ?? 0;
+  }
+
+  Future<int> updateStation(PollingStation station) async {
+    final db = await database;
+    return await db.update(
+      'polling_station',
+      station.toMap(),
+      where: 'station_id = ?',
+      whereArgs: [station.stationId],
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getReportsWithDetails() async {
+    final db = await database;
+    return await db.rawQuery('''
+      SELECT ir.*, ps.station_name, vt.type_name, vt.severity
+      FROM incident_report ir
+      JOIN polling_station ps ON ir.station_id = ps.station_id
+      JOIN violation_type vt ON ir.type_id = vt.type_id
+      ORDER BY ir.timestamp DESC
+    ''');
+  }
+
+  Future<List<Map<String, dynamic>>> searchOfflineReports(
+    String query,
+    String filterSeverity,
+  ) async {
+    final db = await database;
+    String sql = '''
+      SELECT ir.*, ps.station_name, vt.type_name, vt.severity
+      FROM incident_report ir
+      JOIN polling_station ps ON ir.station_id = ps.station_id
+      JOIN violation_type vt ON ir.type_id = vt.type_id
+      WHERE 1=1
+    ''';
+    List<dynamic> args = [];
+
+    if (query.isNotEmpty) {
+      sql += ' AND ir.reporter_name LIKE ?';
+      final likeStr = '%$query%';
+      args.add(likeStr);
+    }
+
+    if (filterSeverity.isNotEmpty && filterSeverity != 'All') {
+      sql += ' AND vt.severity = ?';
+      args.add(filterSeverity);
+    }
+
+    sql += ' ORDER BY ir.timestamp DESC';
+    return await db.rawQuery(sql, args);
   }
 }

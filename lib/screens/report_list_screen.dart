@@ -1,8 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../helpers/database_helper.dart';
 import '../../models/incident_report.dart';
-import '../../models/polling_station.dart';
 import '../../models/violation_type.dart';
 import '../../constants/app_theme.dart';
 import 'report_detail_screen.dart';
@@ -15,9 +15,7 @@ class ReportListScreen extends StatefulWidget {
 }
 
 class _ReportListScreenState extends State<ReportListScreen> {
-  List<IncidentReport> _reports = [];
-  List<PollingStation> _stations = [];
-  List<ViolationType> _types = [];
+  List<Map<String, dynamic>> _reports = [];
   bool _loading = true;
   String _filterSeverity = 'ทั้งหมด';
 
@@ -28,33 +26,19 @@ class _ReportListScreenState extends State<ReportListScreen> {
   }
 
   Future<void> _loadData() async {
-    final reports = await DatabaseHelper.instance.getAllReports();
-    final stations = await DatabaseHelper.instance.getAllStations();
-    final types = await DatabaseHelper.instance.getAllViolationTypes();
+    final reports = await DatabaseHelper.instance.getReportsWithDetails();
     if (mounted) {
       setState(() {
         _reports = reports;
-        _stations = stations;
-        _types = types;
         _loading = false;
       });
     }
   }
 
-  List<IncidentReport> get _filtered {
+  List<Map<String, dynamic>> get _filtered {
     if (_filterSeverity == 'ทั้งหมด') return _reports;
-    return _reports.where((r) {
-      final t = _types.where((t) => t.typeId == r.typeId).firstOrNull;
-      return t?.severity == _filterSeverity;
-    }).toList();
+    return _reports.where((r) => r['severity'] == _filterSeverity).toList();
   }
-
-  String _stationName(int id) =>
-      _stations.where((s) => s.stationId == id).firstOrNull?.stationName ??
-      'ไม่ทราบ';
-
-  ViolationType? _typeOf(int id) =>
-      _types.where((t) => t.typeId == id).firstOrNull;
 
   String _formatDate(String ts) {
     try {
@@ -63,6 +47,11 @@ class _ReportListScreenState extends State<ReportListScreen> {
     } catch (_) {
       return ts.substring(0, 10);
     }
+  }
+
+  Future<void> _confirmDelete(int reportId) async {
+    await DatabaseHelper.instance.deleteReport(reportId);
+    _loadData();
   }
 
   @override
@@ -123,9 +112,8 @@ class _ReportListScreenState extends State<ReportListScreen> {
               child: ListView.builder(
                 itemCount: _filtered.length,
                 itemBuilder: (ctx, i) {
-                  final report = _filtered[i];
-                  final type = _typeOf(report.typeId);
-                  final sev = type?.severity ?? '';
+                  final item = _filtered[i];
+                  final sev = item['severity'] ?? '';
                   return Card(
                     margin: const EdgeInsets.symmetric(
                       horizontal: 16,
@@ -139,27 +127,49 @@ class _ReportListScreenState extends State<ReportListScreen> {
                     ),
                     child: InkWell(
                       borderRadius: BorderRadius.circular(12),
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ReportDetailScreen(
-                            report: report,
-                            type: type,
-                            stationName: _stationName(report.stationId),
+                      onTap: () async {
+                        final reportObj = IncidentReport.fromMap(item);
+                        final vType = ViolationType(
+                          typeId: item['type_id'],
+                          typeName: item['type_name'] ?? 'ไม่ทราบ',
+                          severity: item['severity'] ?? '',
+                        );
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ReportDetailScreen(
+                              report: reportObj,
+                              type: vType,
+                              stationName: item['station_name'] ?? 'ไม่ทราบ',
+                            ),
                           ),
-                        ),
-                      ).then((_) => _loadData()),
+                        ).then((_) => _loadData());
+                      },
                       child: Padding(
-                        padding: const EdgeInsets.all(14),
+                        padding: const EdgeInsets.all(12),
                         child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              width: 4,
-                              height: 60,
-                              decoration: BoxDecoration(
-                                color: severityColor(sev),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child:
+                                  item['evidence_photo'] != null &&
+                                      File(item['evidence_photo']).existsSync()
+                                  ? Image.file(
+                                      File(item['evidence_photo']),
+                                      width: 60,
+                                      height: 60,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : Container(
+                                      width: 60,
+                                      height: 60,
+                                      color: Colors.grey.shade200,
+                                      child: const Icon(
+                                        Icons.image_not_supported,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -170,7 +180,7 @@ class _ReportListScreenState extends State<ReportListScreen> {
                                     children: [
                                       Expanded(
                                         child: Text(
-                                          type?.typeName ?? 'ไม่ทราบประเภท',
+                                          item['type_name'] ?? 'ไม่ทราบประเภท',
                                           style: const TextStyle(
                                             fontWeight: FontWeight.w700,
                                             fontSize: 14,
@@ -179,41 +189,25 @@ class _ReportListScreenState extends State<ReportListScreen> {
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
-                                      if (report.synced == 0)
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 8,
-                                            vertical: 2,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: AppColors.warning
-                                                .withOpacity(0.15),
-                                            borderRadius: BorderRadius.circular(
-                                              10,
-                                            ),
-                                          ),
-                                          child: const Text(
-                                            'รอ Sync',
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              color: AppColors.warning,
-                                            ),
-                                          ),
-                                        ),
                                     ],
                                   ),
                                   const SizedBox(height: 4),
                                   Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       const Padding(
                                         padding: EdgeInsets.only(top: 1),
-                                        child: Icon(Icons.location_on, size: 14, color: AppColors.textMuted),
+                                        child: Icon(
+                                          Icons.location_on,
+                                          size: 14,
+                                          color: AppColors.textMuted,
+                                        ),
                                       ),
                                       const SizedBox(width: 4),
                                       Expanded(
                                         child: Text(
-                                          _stationName(report.stationId),
+                                          item['station_name'],
                                           style: const TextStyle(
                                             fontSize: 12,
                                             color: AppColors.textMuted,
@@ -227,11 +221,15 @@ class _ReportListScreenState extends State<ReportListScreen> {
                                   const SizedBox(height: 2),
                                   Row(
                                     children: [
-                                      const Icon(Icons.person, size: 14, color: AppColors.textMuted),
+                                      const Icon(
+                                        Icons.person,
+                                        size: 14,
+                                        color: AppColors.textMuted,
+                                      ),
                                       const SizedBox(width: 4),
                                       Expanded(
                                         child: Text(
-                                          report.reporterName,
+                                          item['reporter_name'],
                                           style: const TextStyle(
                                             fontSize: 12,
                                             color: AppColors.textMuted,
@@ -240,51 +238,32 @@ class _ReportListScreenState extends State<ReportListScreen> {
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
-                                      if (report.aiResult != null) ...[
-                                        const SizedBox(width: 8),
-                                        const Icon(Icons.psychology, size: 14, color: Color(0xFF34C759)),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          report.aiResult!,
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            color: Color(0xFF34C759),
-                                          ),
-                                        ),
-                                      ],
                                     ],
                                   ),
                                 ],
                               ),
                             ),
                             Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.delete_outline,
+                                    color: AppColors.warning,
                                   ),
-                                  decoration: BoxDecoration(
-                                    color: severityColor(sev).withOpacity(0.12),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    severityLabel(sev),
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
-                                      color: severityColor(sev),
-                                    ),
-                                  ),
+                                  onPressed: () =>
+                                      _confirmDelete(item['report_id']),
+                                  constraints: const BoxConstraints(),
+                                  padding: EdgeInsets.zero,
                                 ),
-                                const SizedBox(height: 6),
+                                const SizedBox(height: 8),
                                 Text(
-                                  _formatDate(report.timestamp),
+                                  _formatDate(item['timestamp']),
                                   style: const TextStyle(
                                     fontSize: 11,
                                     color: AppColors.textMuted,
                                   ),
-                                  textAlign: TextAlign.center,
+                                  textAlign: TextAlign.right,
                                 ),
                               ],
                             ),

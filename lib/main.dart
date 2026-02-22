@@ -32,7 +32,7 @@ class _ElectionAppState extends State<ElectionApp> {
   void initState() {
     super.initState();
     Connectivity().onConnectivityChanged.listen((result) {
-      if (result != ConnectivityResult.none) {
+      if (!result.contains(ConnectivityResult.none)) {
         FirebaseHelper.instance.syncPendingReports();
       }
     });

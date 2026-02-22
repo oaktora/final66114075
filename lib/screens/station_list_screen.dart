@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../helpers/database_helper.dart';
 import '../../models/polling_station.dart';
 import '../../constants/app_theme.dart';
+import 'edit_station_screen.dart';
 
 class StationListScreen extends StatefulWidget {
   const StationListScreen({super.key});
@@ -172,7 +173,11 @@ class _StationListScreenState extends State<StationListScreen> {
                             children: [
                               const Padding(
                                 padding: EdgeInsets.only(top: 1),
-                                child: Icon(Icons.location_on, size: 14, color: AppColors.textMuted),
+                                child: Icon(
+                                  Icons.location_on,
+                                  size: 14,
+                                  color: AppColors.textMuted,
+                                ),
                               ),
                               const SizedBox(width: 4),
                               Expanded(
@@ -189,10 +194,10 @@ class _StationListScreenState extends State<StationListScreen> {
                             ],
                           ),
                           trailing: const Icon(
-                            Icons.chevron_right,
+                            Icons.edit_outlined,
                             color: AppColors.textMuted,
                           ),
-                          onTap: () => _showDetail(station),
+                          onTap: () => _gotoEdit(station),
                         ),
                       ),
                     ),
@@ -203,57 +208,13 @@ class _StationListScreenState extends State<StationListScreen> {
     );
   }
 
-  void _showDetail(PollingStation station) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'หน่วยที่ ${station.stationId}',
-              style: const TextStyle(color: AppColors.textMuted, fontSize: 14),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              station.stationName,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                const Icon(
-                  Icons.map_outlined,
-                  color: AppColors.primary,
-                  size: 18,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  '${station.zone} · ${station.province}',
-                  style: const TextStyle(fontSize: 15),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-          ],
-        ),
-      ),
+  Future<void> _gotoEdit(PollingStation station) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => EditStationScreen(station: station)),
     );
+    if (result == true) {
+      _load();
+    }
   }
 }

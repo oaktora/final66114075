@@ -6,7 +6,7 @@ import '../../constants/app_theme.dart';
 import 'report_list_screen.dart';
 import 'add_report_screen.dart';
 import 'station_list_screen.dart';
-import 'ai_scan_screen.dart';
+import 'search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,6 +17,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   Map<String, int> _stats = {'total': 0, 'high': 0, 'unsynced': 0};
+  List<Map<String, dynamic>> _top3Stations = [];
   bool _isOnline = false;
   bool _loading = true;
 
@@ -29,9 +30,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadStats() async {
     final stats = await DatabaseHelper.instance.getStatsSummary();
+    final top3 = await DatabaseHelper.instance.getTop3Stations();
     if (mounted) {
       setState(() {
         _stats = stats;
+        _top3Stations = top3;
         _loading = false;
       });
     }
@@ -39,7 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _checkConnectivity() async {
     final result = await Connectivity().checkConnectivity();
-    setState(() => _isOnline = result != ConnectivityResult.none);
+    setState(() => _isOnline = !result.contains(ConnectivityResult.none));
   }
 
   Future<void> _syncNow() async {
@@ -86,7 +89,11 @@ class _HomeScreenState extends State<HomeScreen> {
             flexibleSpace: FlexibleSpaceBar(
               title: const Text(
                 'รายงานทุจริตเลือกตั้ง',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  color: Colors.white,
+                ),
               ),
               background: Container(
                 decoration: const BoxDecoration(
@@ -104,15 +111,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 padding: const EdgeInsets.only(right: 8),
                 child: Row(
                   children: [
-                    if ((_stats['unsynced'] ?? 0) > 0)
-                      IconButton(
-                        onPressed: _isOnline ? _syncNow : null,
-                        icon: const Icon(
-                          Icons.sync,
-                          color: Colors.white,
-                        ),
-                        tooltip: 'Sync ${_stats['unsynced']} รายงาน',
-                      ),
+                    IconButton(
+                      onPressed: _isOnline ? _syncNow : null,
+                      icon: const Icon(Icons.sync, color: Colors.white),
+                      tooltip: 'Sync รายงาน',
+                    ),
                     Center(
                       child: Container(
                         padding: const EdgeInsets.symmetric(
@@ -172,13 +175,73 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             const SizedBox(width: 10),
                             _StatCard(
-                              label: 'รอ Sync',
-                              value: _stats['unsynced'].toString(),
-                              icon: Icons.sync,
-                              color: AppColors.warning,
+                              label: 'ระดับกลาง',
+                              value: (_stats['medium'] ?? 0).toString(),
+                              icon: Icons.warning_amber_rounded,
+                              color: AppColors.medSeverity,
                             ),
                           ],
                         ),
+                  if (!_loading && _top3Stations.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    const Text(
+                      '3 อันดับหน่วยที่ถูกร้องเรียนมากที่สุด',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textDark,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    ..._top3Stations.map((station) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  station['station_name'],
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.warning.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  '${station['incident_count']} เรื่อง',
+                                  style: const TextStyle(
+                                    color: AppColors.warning,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ],
                   const SizedBox(height: 24),
                   const Text(
                     'เมนูหลัก',
@@ -219,11 +282,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         onTap: () => _goto(const StationListScreen()),
                       ),
                       _MenuCard(
-                        icon: Icons.document_scanner_outlined,
-                        label: 'สแกน AI',
-                        subtitle: 'วิเคราะห์ภาพหลักฐาน',
+                        icon: Icons.search_rounded,
+                        label: 'ค้นหาข้อมูล',
+                        subtitle: 'ค้นหารายงานต่างๆ',
                         color: const Color(0xFF34C759),
-                        onTap: () => _goto(const AiScanScreen()),
+                        onTap: () => _goto(const SearchScreen()),
                       ),
                     ],
                   ),
